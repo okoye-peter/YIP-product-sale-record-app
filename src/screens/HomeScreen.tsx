@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -27,19 +28,24 @@ export const HomeScreen = ({ navigation }: any) => {
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    const setup = async () => {
-      try {
-        await initDatabase();
-        const storedProducts = await getAllProducts();
-        dispatch(setProducts(storedProducts));
-      } catch (error) {
-        console.error('Failed to init DB:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    setup();
+    initDatabase().catch(err => console.error("DB Init error:", err));
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchProducts = async () => {
+        try {
+          const storedProducts = await getAllProducts();
+          dispatch(setProducts(storedProducts));
+          setIsInitializing(false);
+        } catch (error) {
+          console.error('Failed to fetch products on focus:', error);
+          setIsInitializing(false);
+        }
+      };
+      fetchProducts();
+    }, [dispatch])
+  );
 
   const handleDelete = async (id: string) => {
     try {

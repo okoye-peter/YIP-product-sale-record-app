@@ -10,9 +10,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { getProductSales } from '../utils/db';
+import { setProducts } from '../store/slices/productSlice';
+import { getProductSales, getAllProducts } from '../utils/db';
 import { Colors } from '../theme/colors';
 import { ChevronLeft, ShoppingBag, Calendar, User, TrendingUp, AlertCircle, Plus } from 'lucide-react-native';
 
@@ -22,22 +24,30 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
     state.products.items.find(p => p.id === productId)
   );
 
+  const dispatch = useDispatch();
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const data = await getProductSales(productId);
-        setSales(data);
-      } catch (error) {
-        console.error('Failed to fetch product sales:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSales();
-  }, [productId]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const syncData = async () => {
+        try {
+          // Sync global products to ensure quantity is updated
+          const storedProducts = await getAllProducts();
+          dispatch(setProducts(storedProducts));
+          
+          // Sync specific product sales
+          const data = await getProductSales(productId);
+          setSales(data);
+        } catch (error) {
+          console.error('Failed to sync product data:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      syncData();
+    }, [productId, dispatch])
+  );
 
   if (!product) {
     return (

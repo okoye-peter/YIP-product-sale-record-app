@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { getAllSales } from '../utils/db';
 import { Colors } from '../theme/colors';
 import { ChevronLeft, ReceiptText, Calendar, User, Package } from 'lucide-react-native';
@@ -17,19 +18,21 @@ export const SalesHistoryScreen = ({ navigation }: any) => {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const data = await getAllSales();
-        setSales(data);
-      } catch (error) {
-        console.error('Failed to fetch sales:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSales();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchSales = async () => {
+        try {
+          const data = await getAllSales();
+          setSales(data);
+        } catch (error) {
+          console.error('Failed to fetch sales:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSales();
+    }, [])
+  );
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);

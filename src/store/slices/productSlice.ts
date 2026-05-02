@@ -35,8 +35,12 @@ const productSlice = createSlice({
     },
     recordSale: (state, action: PayloadAction<{ productId: string; quantity: number }>) => {
       const product = state.items.find((p) => p.id === action.productId);
-      if (product && product.quantity >= action.quantity) {
-        product.quantity -= action.quantity;
+      if (product) {
+        const currentQty = Number(product.quantity);
+        const sellQty = Number(action.quantity);
+        if (currentQty >= sellQty) {
+          product.quantity = currentQty - sellQty;
+        }
       }
     },
   },
